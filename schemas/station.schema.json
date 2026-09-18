@@ -1,0 +1,49 @@
+{
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "$id": "https://robert-dean.github.io/deadair-community/schemas/station.schema.json",
+    "title": "Station",
+    "description": "A deadair station somebody runs and wants people to tune in to. One file per station, named for its slug.",
+    "type": "object",
+    "properties": {
+        "$schema": { "type": "string" },
+        "name": {
+            "description": "What the station calls itself on air.",
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 80
+        },
+        "url": {
+            "description": "The station's public address, https and with no trailing slash. The directory checks whether it is on air by reading <url>/api/nowplaying, which every station answers without a sign-in.",
+            "type": "string",
+            "pattern": "^https://[^/?#\\s]+(?:/[^?#\\s]*[^/?#\\s])?$",
+            "maxLength": 200
+        },
+        "location": {
+            "description": "Where it broadcasts from, as loosely as you like: a city, a region, a country.",
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 80
+        },
+        "genres": {
+            "description": "What it mostly plays. Up to five.",
+            "type": "array",
+            "items": { "type": "string", "minLength": 1, "maxLength": 30 },
+            "maxItems": 5,
+            "uniqueItems": true
+        },
+        "language": {
+            "description": "The language the presenter speaks, as a BCP 47 tag such as en, en-GB or fr.",
+            "type": "string",
+            "pattern": "^[a-z]{2,3}(?:-[A-Za-z0-9]{2,8})*$"
+        },
+        "description": {
+            "description": "A few sentences about the station, in your own words.",
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 600
+        },
+        "listing": { "$ref": "listing.schema.json" }
+    },
+    "required": ["name", "url", "description", "listing"],
+    "additionalProperties": false
+}

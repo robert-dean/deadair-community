@@ -1,0 +1,19 @@
+{
+    "name": "deadair-community",
+    "private": true,
+    "description": "The deadair community catalogue: stations, plugins, personas and apps, one file per entry.",
+    "license": "CC0-1.0",
+    "type": "module",
+    "engines": {
+        "node": ">=24"
+    },
+    "scripts": {
+        "build": "node scripts/catalog.build.mjs",
+        "check": "node scripts/catalog.build.mjs --check",
+        "test": "node --test \"tests/**/*.test.mjs\""
+    },
+    "devDependencies": {
+        "ajv": "^8.17.1",
+        "ajv-formats": "^3.0.1"
+    }
+}

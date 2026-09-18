@@ -1,0 +1,61 @@
+{
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "$id": "https://robert-dean.github.io/deadair-community/schemas/app.schema.json",
+    "title": "App",
+    "description": "Something that plays a station, drives one, or builds on its API: a player, a remote, an integration, a library. Listed as a link; nothing here is installed by the catalogue.",
+    "type": "object",
+    "properties": {
+        "$schema": { "type": "string" },
+        "name": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 80
+        },
+        "kind": {
+            "description": "player plays the stream. remote drives the station without playing it. integration connects it to something else. library is code for other people's code.",
+            "enum": ["player", "remote", "integration", "library"]
+        },
+        "platforms": {
+            "type": "array",
+            "items": {
+                "enum": ["android", "ios", "macos", "windows", "linux", "web", "stream-deck", "home-assistant", "cli", "other"]
+            },
+            "minItems": 1,
+            "uniqueItems": true
+        },
+        "description": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 600
+        },
+        "author": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 80
+        },
+        "url": {
+            "description": "Where to get it: a store listing, a release page, a package.",
+            "type": "string",
+            "pattern": "^https://\\S+$",
+            "maxLength": 300
+        },
+        "repository": {
+            "description": "Where its source is, when that is somewhere other than url.",
+            "type": "string",
+            "pattern": "^https://\\S+$",
+            "maxLength": 300
+        },
+        "license": {
+            "type": "string",
+            "pattern": "^[A-Za-z0-9.+-]+(?: (?:AND|OR|WITH) [A-Za-z0-9.+-]+)*$",
+            "maxLength": 80
+        },
+        "firstParty": {
+            "description": "True for the apps built in the deadair repository itself. Set by a maintainer.",
+            "type": "boolean"
+        },
+        "listing": { "$ref": "listing.schema.json" }
+    },
+    "required": ["name", "kind", "platforms", "description", "author", "url", "listing"],
+    "additionalProperties": false
+}

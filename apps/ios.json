@@ -1,0 +1,12 @@
+{
+    "$schema": "../schemas/app.schema.json",
+    "name": "deadair for iPhone",
+    "kind": "player",
+    "platforms": ["ios"],
+    "description": "Background playback, the lock screen and Control Center, and whichever format the station publishes. Built from source.",
+    "author": "deadair",
+    "url": "https://github.com/robert-dean/deadair/tree/main/apps/ios",
+    "license": "MIT",
+    "firstParty": true,
+    "listing": { "submittedBy": "robert-dean", "dateAdded": "2026-09-18" }
+}

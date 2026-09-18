@@ -1,0 +1,13 @@
+{
+    "$schema": "../schemas/app.schema.json",
+    "name": "@deadair/sdk",
+    "kind": "library",
+    "platforms": ["web", "cli", "other"],
+    "description": "The typed TypeScript client the console itself is built on. With an API key from Settings, a script, a home-automation hub or an app of your own can read the station or drive it.",
+    "author": "deadair",
+    "url": "https://www.npmjs.com/package/@deadair/sdk",
+    "repository": "https://github.com/robert-dean/deadair/tree/main/packages/sdk",
+    "license": "MIT",
+    "firstParty": true,
+    "listing": { "submittedBy": "robert-dean", "dateAdded": "2026-09-18" }
+}

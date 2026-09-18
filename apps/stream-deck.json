@@ -1,0 +1,13 @@
+{
+    "$schema": "../schemas/app.schema.json",
+    "name": "deadair for Stream Deck",
+    "kind": "remote",
+    "platforms": ["stream-deck"],
+    "description": "The desk on keys: what is on air with its cover, Skip, a Stop that asks twice, and a heart on the record playing. It does not play the station.",
+    "author": "deadair",
+    "url": "https://marketplace.elgato.com/product/deadair-67841f42-616f-45f3-9708-341017359656",
+    "repository": "https://github.com/robert-dean/deadair/tree/main/apps/streamdeck",
+    "license": "MIT",
+    "firstParty": true,
+    "listing": { "submittedBy": "robert-dean", "dateAdded": "2026-09-18" }
+}

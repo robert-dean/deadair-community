@@ -1,0 +1,13 @@
+{
+    "$schema": "../schemas/app.schema.json",
+    "name": "deadair for Android",
+    "kind": "player",
+    "platforms": ["android"],
+    "description": "Background playback and lock-screen controls. Signed in as the operator, it is the station's remote as well.",
+    "author": "deadair",
+    "url": "https://play.google.com/store/apps/details?id=com.maroonedsoftware.deadair",
+    "repository": "https://github.com/robert-dean/deadair/tree/main/apps/android",
+    "license": "MIT",
+    "firstParty": true,
+    "listing": { "submittedBy": "robert-dean", "dateAdded": "2026-09-18" }
+}

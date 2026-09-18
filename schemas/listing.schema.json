@@ -1,0 +1,26 @@
+{
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "$id": "https://robert-dean.github.io/deadair-community/schemas/listing.schema.json",
+    "title": "Provenance",
+    "description": "Who put an entry here and when. Stamped by the submission workflow; leave it out when writing an entry by hand and a maintainer adds it.",
+    "type": "object",
+    "properties": {
+        "submittedBy": {
+            "description": "The GitHub login that submitted the entry.",
+            "type": "string",
+            "pattern": "^[A-Za-z0-9](?:[A-Za-z0-9-]{0,38})$"
+        },
+        "dateAdded": {
+            "description": "When the entry first landed, YYYY-MM-DD. Kept across edits.",
+            "type": "string",
+            "format": "date"
+        },
+        "dateModified": {
+            "description": "When the entry last changed, YYYY-MM-DD.",
+            "type": "string",
+            "format": "date"
+        }
+    },
+    "required": ["submittedBy", "dateAdded"],
+    "additionalProperties": false
+}

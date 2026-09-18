@@ -1,0 +1,14 @@
+{
+    "$schema": "../schemas/plugin.schema.json",
+    "id": "example.apple-music-charts",
+    "name": "Apple Music charts",
+    "description": "Apple Music's most-played songs in one country, as a chart the station can programme an hour from. The worked example the plugin guide walks through, built from outside the station's repository as anybody else's plugin is.",
+    "author": "deadair",
+    "repository": "https://github.com/robert-dean/deadair/tree/main/examples/plugins/apple-music-charts",
+    "license": "MIT",
+    "version": "0.1.0",
+    "apiVersion": "^1.0.0",
+    "capabilities": ["charts"],
+    "hosts": ["rss.marketingtools.apple.com"],
+    "listing": { "submittedBy": "robert-dean", "dateAdded": "2026-09-18" }
+}

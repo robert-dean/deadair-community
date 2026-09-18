@@ -1,0 +1,12 @@
+{
+    "$schema": "../schemas/app.schema.json",
+    "name": "deadair for macOS",
+    "kind": "player",
+    "platforms": ["macos"],
+    "description": "A listener with a real player and the operator's desk in one window, on Apple Silicon. Built from source.",
+    "author": "deadair",
+    "url": "https://github.com/robert-dean/deadair/tree/main/apps/desktop",
+    "license": "MIT",
+    "firstParty": true,
+    "listing": { "submittedBy": "robert-dean", "dateAdded": "2026-09-18" }
+}

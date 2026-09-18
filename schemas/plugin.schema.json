@@ -1,0 +1,107 @@
+{
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "$id": "https://robert-dean.github.io/deadair-community/schemas/plugin.schema.json",
+    "title": "Plugin",
+    "description": "A plugin somebody other than the station's maintainer wrote. Listing is not vetting: a plugin is code that runs inside the station's own process, and everything declared here is the author's own description of it.",
+    "type": "object",
+    "properties": {
+        "$schema": { "type": "string" },
+        "id": {
+            "description": "The manifest's id, exactly. Reverse-DNS and lowercase. Ids under deadair. belong to the plugins that ship with the station.",
+            "type": "string",
+            "pattern": "^[a-z0-9][a-z0-9-]*(?:\\.[a-z0-9][a-z0-9-]*)+$",
+            "maxLength": 100
+        },
+        "name": {
+            "description": "The manifest's name.",
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 80
+        },
+        "description": {
+            "description": "What it does for a station, in a sentence or three.",
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 600
+        },
+        "author": {
+            "description": "Who wrote it, as they want to be credited.",
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 80
+        },
+        "repository": {
+            "description": "Where its source is, https.",
+            "type": "string",
+            "pattern": "^https://\\S+$",
+            "maxLength": 300
+        },
+        "license": {
+            "description": "Its licence, as an SPDX identifier such as MIT or GPL-3.0-only.",
+            "type": "string",
+            "pattern": "^[A-Za-z0-9.+-]+(?: (?:AND|OR|WITH) [A-Za-z0-9.+-]+)*$",
+            "maxLength": 80
+        },
+        "version": {
+            "description": "The version this entry describes, as the manifest states it.",
+            "type": "string",
+            "pattern": "^\\d+\\.\\d+\\.\\d+(?:-[0-9A-Za-z.-]+)?$"
+        },
+        "apiVersion": {
+            "description": "The manifest's apiVersion: the range of the plugin API it says it works with.",
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 40
+        },
+        "capabilities": {
+            "description": "The manifest's capabilities.",
+            "type": "array",
+            "items": {
+                "enum": [
+                    "catalog",
+                    "stream",
+                    "steer",
+                    "oauth",
+                    "enrichment",
+                    "speech",
+                    "llm",
+                    "analysis",
+                    "mixer",
+                    "charts",
+                    "news",
+                    "narration",
+                    "podcast",
+                    "similarity",
+                    "search",
+                    "weather",
+                    "scrobble"
+                ]
+            },
+            "minItems": 1,
+            "uniqueItems": true
+        },
+        "hosts": {
+            "description": "The hosts its manifest says it talks to, as written there. What a well-behaved plugin reaches, and not a limit on what any plugin can.",
+            "type": "array",
+            "items": { "type": "string", "pattern": "^(?:\\*\\.)?[a-z0-9.-]+$", "maxLength": 253 },
+            "uniqueItems": true
+        },
+        "hostsFromConfig": {
+            "description": "True when it also talks to an address the operator types into its settings, such as a self-hosted server.",
+            "type": "boolean"
+        },
+        "package": {
+            "description": "A tarball the console's Import accepts: what npm pack writes. Leave it out and the listing says to build from source.",
+            "type": "object",
+            "properties": {
+                "tarball": { "type": "string", "pattern": "^https://\\S+\\.tgz$", "maxLength": 400 },
+                "sha256": { "type": "string", "pattern": "^[0-9a-f]{64}$" }
+            },
+            "required": ["tarball", "sha256"],
+            "additionalProperties": false
+        },
+        "listing": { "$ref": "listing.schema.json" }
+    },
+    "required": ["id", "name", "description", "author", "repository", "license", "version", "apiVersion", "capabilities", "hosts", "listing"],
+    "additionalProperties": false
+}

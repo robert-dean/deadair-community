@@ -1,0 +1,26 @@
+{
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "$id": "https://robert-dean.github.io/deadair-community/schemas/persona.schema.json",
+    "title": "Persona",
+    "description": "A character somebody wrote for their station. The file half is exactly what the console's Personas page exports, and it is published on its own so that Import takes the download as it stands.",
+    "type": "object",
+    "properties": {
+        "$schema": { "type": "string" },
+        "summary": {
+            "description": "One line for the card, in your words rather than the character's.",
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 160
+        },
+        "author": {
+            "description": "Who wrote the character, as they want to be credited.",
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 80
+        },
+        "file": { "$ref": "persona.file.schema.json" },
+        "listing": { "$ref": "listing.schema.json" }
+    },
+    "required": ["summary", "author", "file", "listing"],
+    "additionalProperties": false
+}
