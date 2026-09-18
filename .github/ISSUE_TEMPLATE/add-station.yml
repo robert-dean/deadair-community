@@ -33,7 +33,7 @@ body:
     - type: input
       attributes:
           label: Language
-          description: The presenter's language as a tag such as en, en-GB or fr. Optional.
+          description: The presenter's language, by name or as a tag such as en, en-GB or fr. Optional.
     - type: textarea
       attributes:
           label: About the station

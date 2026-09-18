@@ -4,7 +4,7 @@ import { join } from 'node:path';
 import { describe, it } from 'node:test';
 import { root } from '../scripts/catalog.files.mjs';
 import { checkEntries } from '../scripts/catalog.rules.mjs';
-import { FIELDS, readForm, slugify, SUBMISSION_LABELS, toEntry } from '../scripts/submission.parse.mjs';
+import { FIELDS, languageTag, readForm, slugify, SUBMISSION_LABELS, toEntry } from '../scripts/submission.parse.mjs';
 
 /** A form's body as GitHub renders it: a heading per field, `_No response_` for an empty optional one. */
 const render = fields =>
@@ -50,6 +50,23 @@ describe('slugify', () => {
     });
 });
 
+describe('languageTag', () => {
+    it('turns a language named in English or in itself into its tag', () => {
+        assert.equal(languageTag('English'), 'en');
+        assert.equal(languageTag(' french '), 'fr');
+        assert.equal(languageTag('Deutsch'), 'de');
+    });
+
+    it('keeps a tag, putting its case right', () => {
+        assert.equal(languageTag('en-GB'), 'en-GB');
+        assert.equal(languageTag('EN-gb'), 'en-GB');
+    });
+
+    it('leaves anything else as written, for the rules to refuse', () => {
+        assert.equal(languageTag('Klingon, mostly'), 'Klingon, mostly');
+    });
+});
+
 describe('toEntry', () => {
     it('makes a station that passes the rules', () => {
         const form = readForm(
@@ -66,6 +83,14 @@ describe('toEntry', () => {
         assert.equal(result.data.url, 'https://radio.example.org');
         assert.deepEqual(result.data.genres, ['jungle', 'dub', 'ambient']);
         assert.deepEqual(result.data.listing, { submittedBy: 'someone', dateAdded: '2026-09-18' });
+        assert.deepEqual(checkEntries([{ kind: 'stations', slug: result.slug, path: 'x', data: result.data }]), []);
+    });
+
+    it('takes a station\'s language by name', () => {
+        const form = readForm(render({ 'Station name': 'Night Shift', Address: 'https://radio.example.org', Language: 'English', 'About the station': 'All night.' }));
+        const result = toEntry('stations', form, context);
+
+        assert.equal(result.data.language, 'en');
         assert.deepEqual(checkEntries([{ kind: 'stations', slug: result.slug, path: 'x', data: result.data }]), []);
     });
 
