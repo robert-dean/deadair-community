@@ -13,10 +13,11 @@ const answer = {
 };
 
 describe('readNowPlaying', () => {
-    it('keeps the name, the show and the track, and nothing else', () => {
+    it('keeps the name, the mounts, the show and the track, and nothing else', () => {
         assert.deepEqual(readNowPlaying(answer), {
             onAir: true,
             name: 'Deadair',
+            mounts: [{ format: 'mp3', path: '/live.mp3' }],
             show: { name: 'Overnight', host: 'Chaz' },
             track: { kind: 'record', artist: 'Eradicator', title: 'The Paradox' },
         });
@@ -32,6 +33,20 @@ describe('readNowPlaying', () => {
         assert.deepEqual(readNowPlaying({ onAir: false, station: 42, track: { kind: 'jingle', title: 'x' } }), { onAir: false });
     });
 
+    it('keeps a mount only as a path on the station itself, in a format it knows', () => {
+        const mounts = [
+            { format: 'mp3', path: '/live.mp3' },
+            { format: 'mp3', path: 'https://elsewhere.example/live.mp3' },
+            { format: 'mp3', path: '//elsewhere.example/x' },
+            { format: 'wav', path: '/live.wav' },
+            { format: 'hls', path: '/live.m3u8' },
+        ];
+        assert.deepEqual(readNowPlaying({ onAir: true, mounts }).mounts, [
+            { format: 'mp3', path: '/live.mp3' },
+            { format: 'hls', path: '/live.m3u8' },
+        ]);
+    });
+
     it('cuts a field to length', () => {
         assert.equal(readNowPlaying({ onAir: true, station: 'x'.repeat(500) }).name.length, 80);
     });
@@ -44,6 +59,7 @@ describe('stationStatus', () => {
             checkedAt: 'T1',
             lastAnsweredAt: 'T1',
             name: 'Deadair',
+            mounts: [{ format: 'mp3', path: '/live.mp3' }],
             show: { name: 'Overnight', host: 'Chaz' },
             track: { kind: 'record', artist: 'Eradicator', title: 'The Paradox' },
         });

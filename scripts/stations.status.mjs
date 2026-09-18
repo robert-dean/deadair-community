@@ -12,6 +12,10 @@ export const STATUS_FORMAT = 'deadair.status/1';
 /** How long a station can go unanswered before the run's summary names it for a maintainer. Never removed automatically. */
 export const QUIET_DAYS = 30;
 
+/** A same-origin path, as the station states its mounts. Never a URL, so a listing cannot point a listener somewhere else. */
+const MOUNT_PATH = /^\/[A-Za-z0-9._-]{1,60}$/;
+const MOUNT_FORMATS = ['mp3', 'aac', 'opus', 'flac', 'hls'];
+
 const text = (value, max) => (typeof value === 'string' && value.trim().length > 0 ? value.trim().slice(0, max) : undefined);
 
 /**
@@ -31,6 +35,16 @@ export function readNowPlaying(body) {
         const show = text(body.show.name, 120);
         const host = text(body.show.host, 80);
         if (show !== undefined) status.show = host === undefined ? { name: show } : { name: show, host };
+    }
+
+    // Where to listen, as paths on the station's own address. A station serves /live.mp3 unless its
+    // operator turned it off, and the others only when turned on, so the answer is the only way to know.
+    if (Array.isArray(body.mounts)) {
+        const mounts = body.mounts
+            .filter(mount => typeof mount === 'object' && mount !== null && MOUNT_PATH.test(mount.path ?? '') && MOUNT_FORMATS.includes(mount.format))
+            .slice(0, 8)
+            .map(({ format, path }) => ({ format, path }));
+        if (mounts.length > 0) status.mounts = mounts;
     }
 
     if (typeof body.track === 'object' && body.track !== null) {
