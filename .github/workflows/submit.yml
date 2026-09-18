@@ -1,0 +1,92 @@
+name: Submit
+
+# Turns a submission issue into a one-file pull request, or answers it with what has to change.
+#
+# This runs on text anybody with a GitHub account can write, with a token that can push a branch and
+# open a pull request, so three rules hold throughout:
+#
+# - The issue is read by scripts/submission.run.mjs from the event payload on disk. No expression here
+#   puts any of its text into a shell; the steps below see only the path the script built from a
+#   checked slug, the issue's number and its author's login, and see them through `env`.
+# - The workflow that runs is always the one on main: an `issues` event never runs a workflow from a
+#   fork or a branch, so a submission cannot change what judges it.
+# - Nothing merges. The bot's branch is a proposal a maintainer reads.
+on:
+    issues:
+        types: [opened, edited, reopened]
+
+permissions: {}
+
+# An edit made while an earlier run is still going supersedes it.
+concurrency:
+    group: submission-${{ github.event.issue.number }}
+    cancel-in-progress: true
+
+jobs:
+    submit:
+        if: >-
+            github.event.issue.state == 'open' && (
+            contains(github.event.issue.labels.*.name, 'add-station') ||
+            contains(github.event.issue.labels.*.name, 'add-plugin') ||
+            contains(github.event.issue.labels.*.name, 'add-persona') ||
+            contains(github.event.issue.labels.*.name, 'add-app'))
+        runs-on: ubuntu-latest
+        timeout-minutes: 10
+
+        permissions:
+            contents: write
+            pull-requests: write
+            issues: write
+
+        steps:
+            - name: Checkout
+              uses: actions/checkout@v7
+              with:
+                  ref: main
+                  persist-credentials: false
+
+            - name: Setup Node
+              uses: actions/setup-node@v7
+              with:
+                  node-version: 26
+                  cache: npm
+
+            - name: Install
+              run: npm ci
+
+            - name: Turn the issue into an entry
+              id: entry
+              run: node scripts/submission.run.mjs
+
+            - name: Say what has to change
+              if: steps.entry.outputs.ok != 'true'
+              env:
+                  GH_TOKEN: ${{ github.token }}
+                  ISSUE: ${{ github.event.issue.number }}
+              run: gh issue comment "$ISSUE" --repo "$GITHUB_REPOSITORY" --body-file "$RUNNER_TEMP/submission.md"
+
+            # One branch per issue, rewritten on every edit, so the pull request always shows the entry
+            # as the issue now describes it.
+            - name: Open or update the pull request
+              if: steps.entry.outputs.ok == 'true'
+              env:
+                  GH_TOKEN: ${{ github.token }}
+                  ISSUE: ${{ github.event.issue.number }}
+                  AUTHOR: ${{ github.event.issue.user.login }}
+                  ENTRY: ${{ steps.entry.outputs.path }}
+              run: |
+                  branch="submission/$ISSUE"
+                  git config user.name 'github-actions[bot]'
+                  git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+                  git switch -c "$branch"
+                  git add -- "$ENTRY"
+                  git commit -m "Add $ENTRY" -m "Submitted by @$AUTHOR in #$ISSUE."
+                  git push --force "https://x-access-token:${GH_TOKEN}@github.com/${GITHUB_REPOSITORY}.git" "HEAD:refs/heads/$branch"
+
+                  existing="$(gh pr list --repo "$GITHUB_REPOSITORY" --head "$branch" --state open --json number --jq '.[0].number')"
+                  if [ -n "$existing" ]; then
+                      gh pr edit "$existing" --repo "$GITHUB_REPOSITORY" --body-file "$RUNNER_TEMP/submission.md"
+                      gh issue comment "$ISSUE" --repo "$GITHUB_REPOSITORY" --body "Updated #$existing from this edit."
+                  else
+                      gh pr create --repo "$GITHUB_REPOSITORY" --base main --head "$branch" --title "Add $ENTRY" --body-file "$RUNNER_TEMP/submission.md"
+                  fi

@@ -1,0 +1,97 @@
+name: List a plugin
+description: List a plugin you wrote, with where to get it.
+title: 'List a plugin: '
+labels: [add-plugin]
+body:
+    - type: markdown
+      attributes:
+          value: |
+              **Listed is not vetted.** A plugin is code that runs inside the station's own process, and the directory says so on every card. Everything here is your description of your plugin: copy it from your manifest.
+
+              Give a tarball URL (what `npm pack` writes, for example from a GitHub release or the npm registry) and the listing links to it with its SHA-256, so an operator can upload it through the console's Import. The bot downloads it once to take that checksum and to read its `package.json`. It never runs it.
+    - type: input
+      attributes:
+          label: Plugin id
+          description: The manifest's id, exactly. Ids under deadair. belong to the plugins the station ships.
+          placeholder: org.example.bandcamp
+      validations:
+          required: true
+    - type: input
+      attributes:
+          label: Name
+          description: The manifest's name.
+      validations:
+          required: true
+    - type: textarea
+      attributes:
+          label: What it does
+          description: For a station, in a sentence or three.
+      validations:
+          required: true
+    - type: input
+      attributes:
+          label: Author
+      validations:
+          required: true
+    - type: input
+      attributes:
+          label: Source repository
+          placeholder: https://github.com/you/your-plugin
+      validations:
+          required: true
+    - type: input
+      attributes:
+          label: Licence
+          description: An SPDX identifier.
+          placeholder: MIT
+      validations:
+          required: true
+    - type: input
+      attributes:
+          label: Version
+          description: The version this listing describes.
+          placeholder: 1.0.0
+      validations:
+          required: true
+    - type: input
+      attributes:
+          label: API version range
+          description: The manifest's apiVersion.
+          placeholder: ^1.0.0
+      validations:
+          required: true
+    - type: checkboxes
+      attributes:
+          label: Capabilities
+          description: The manifest's capabilities.
+          options:
+              - label: catalog
+              - label: stream
+              - label: steer
+              - label: oauth
+              - label: enrichment
+              - label: speech
+              - label: llm
+              - label: analysis
+              - label: mixer
+              - label: charts
+              - label: news
+              - label: narration
+              - label: podcast
+              - label: similarity
+              - label: search
+              - label: weather
+              - label: scrobble
+    - type: textarea
+      attributes:
+          label: Hosts it talks to
+          description: The hosts in the manifest's network permissions, one per line. Leave it empty if it talks to none.
+    - type: checkboxes
+      attributes:
+          label: Operator-configured address
+          options:
+              - label: It also talks to an address the operator types into its settings
+    - type: input
+      attributes:
+          label: Tarball URL
+          description: https, ending .tgz. Optional; without one the listing says to build it from source.

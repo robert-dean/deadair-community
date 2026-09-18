@@ -1,0 +1,59 @@
+name: List an app
+description: List a player, a remote, an integration or a library built on deadair.
+title: 'List an app: '
+labels: [add-app]
+body:
+    - type: input
+      attributes:
+          label: Name
+      validations:
+          required: true
+    - type: dropdown
+      attributes:
+          label: Kind
+          description: player plays the stream. remote drives the station without playing it. integration connects it to something else. library is code for other people's code.
+          options:
+              - player
+              - remote
+              - integration
+              - library
+      validations:
+          required: true
+    - type: checkboxes
+      attributes:
+          label: Platforms
+          options:
+              - label: android
+              - label: ios
+              - label: macos
+              - label: windows
+              - label: linux
+              - label: web
+              - label: stream-deck
+              - label: home-assistant
+              - label: cli
+              - label: other
+    - type: textarea
+      attributes:
+          label: What it does
+      validations:
+          required: true
+    - type: input
+      attributes:
+          label: Author
+      validations:
+          required: true
+    - type: input
+      attributes:
+          label: Where to get it
+          description: A store listing, a release page, a package. https.
+      validations:
+          required: true
+    - type: input
+      attributes:
+          label: Source repository
+          description: When it is somewhere other than the address above. Optional.
+    - type: input
+      attributes:
+          label: Licence
+          description: An SPDX identifier. Optional.

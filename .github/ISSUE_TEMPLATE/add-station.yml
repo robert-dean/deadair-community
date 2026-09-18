@@ -1,0 +1,42 @@
+name: Add a station
+description: Put a station you run in the directory.
+title: 'Add a station: '
+labels: [add-station]
+body:
+    - type: markdown
+      attributes:
+          value: |
+              Your station goes in the directory at deadair.radio/community/stations, with whether it is on the air and what it is playing, read every fifteen minutes from its public `/api/nowplaying`. A bot turns this form into a pull request, and a maintainer merges it.
+
+              Listing a public address is your call, and so is what you broadcast: see [music licensing](https://deadair.radio/docs/licensing) before you do.
+    - type: input
+      attributes:
+          label: Station name
+          description: What it calls itself on air.
+      validations:
+          required: true
+    - type: input
+      attributes:
+          label: Address
+          description: The station's public https address, the one its console and its stream are served from.
+          placeholder: https://radio.example.org
+      validations:
+          required: true
+    - type: input
+      attributes:
+          label: Where it broadcasts from
+          description: As loosely as you like. Optional.
+    - type: input
+      attributes:
+          label: What it plays
+          description: Up to five genres, separated by commas. Optional.
+    - type: input
+      attributes:
+          label: Language
+          description: The presenter's language as a tag such as en, en-GB or fr. Optional.
+    - type: textarea
+      attributes:
+          label: About the station
+          description: A few sentences, in your own words. At most 600 characters.
+      validations:
+          required: true

@@ -1,0 +1,30 @@
+name: Share a persona
+description: Share a character you wrote, so other stations can put them on the air.
+title: 'Share a persona: '
+labels: [add-persona]
+body:
+    - type: markdown
+      attributes:
+          value: |
+              In the console, open the character on the Personas page and export it on its own, then paste the whole file below. Everything in it becomes public, stories included, and is dedicated to the public domain so anybody can use it.
+
+              The character's key becomes its name in the catalogue, so it must not be one every station already has (`classic`, `latenight` and the rest of the ones that ship). Rename the key in the console before exporting if it is.
+    - type: input
+      attributes:
+          label: One line for the card
+          description: In your words rather than the character's. At most 160 characters.
+      validations:
+          required: true
+    - type: input
+      attributes:
+          label: Author
+          description: Who wrote the character, as you want to be credited.
+      validations:
+          required: true
+    - type: textarea
+      attributes:
+          label: Exported file
+          description: The whole file the console exported, as it is.
+          render: json
+      validations:
+          required: true

@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+    - name: Ask a question, or talk about a station
+      url: https://github.com/robert-dean/deadair/discussions
+      about: Everything but a submission happens on the deadair repository's Discussions.
+    - name: Report an entry, or ask for one to be taken down
+      url: https://github.com/robert-dean/deadair-community/blob/main/TAKEDOWN.md
+      about: No account needed. TAKEDOWN.md says how.

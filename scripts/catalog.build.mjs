@@ -8,39 +8,13 @@
  * dist/ holds catalog.json, each persona's file under personas/, and the schemas, so an entry's
  * "$schema" resolves in an editor.
  */
-import { cpSync, existsSync, mkdirSync, readdirSync, readFileSync, rmSync, statSync, writeFileSync } from 'node:fs';
-import { basename, dirname, extname, join, relative, resolve } from 'node:path';
-import { fileURLToPath } from 'node:url';
+import { cpSync, mkdirSync, rmSync, writeFileSync } from 'node:fs';
+import { dirname, join } from 'node:path';
+import { readEntries, root } from './catalog.files.mjs';
 import { assembleCatalog, checkEntries, KINDS } from './catalog.rules.mjs';
 
-const root = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const dist = join(root, 'dist');
 const checkOnly = process.argv.includes('--check');
-
-/** Every file under the four directories, read and parsed. A file that is not `<slug>.json` is an entry that fails. */
-function readEntries() {
-    const entries = [];
-    for (const kind of KINDS) {
-        const dir = join(root, kind);
-        if (!existsSync(dir)) continue;
-        for (const name of readdirSync(dir).sort()) {
-            if (name.startsWith('.')) continue;
-            const file = join(dir, name);
-            const path = relative(root, file);
-            const slug = basename(name, extname(name));
-            if (statSync(file).isDirectory() || extname(name) !== '.json') {
-                entries.push({ kind, slug, path, readError: 'an entry is one <slug>.json file' });
-                continue;
-            }
-            try {
-                entries.push({ kind, slug, path, data: JSON.parse(readFileSync(file, 'utf8')) });
-            } catch (error) {
-                entries.push({ kind, slug, path, readError: `is not JSON: ${error.message}` });
-            }
-        }
-    }
-    return entries;
-}
 
 const entries = readEntries();
 const problems = checkEntries(entries);
