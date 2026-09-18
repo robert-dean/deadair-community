@@ -1,0 +1,72 @@
+name: Publish
+
+# Builds catalog.json and each persona's file from main and publishes them to GitHub Pages, which
+# serves them with an open CORS header, so the site at deadair.radio can read them from the browser.
+#
+# Published by an Actions deployment rather than a branch, so nothing commits to this repository and
+# its history is only the entries.
+on:
+    push:
+        branches:
+            - main
+    workflow_dispatch:
+
+permissions:
+    contents: read
+
+# One deployment at a time, and a queued one is never cancelled: Pages publishes whichever finishes
+# last, so cancelling the older run is what could leave the older catalogue up.
+concurrency:
+    group: pages
+    cancel-in-progress: false
+
+jobs:
+    build:
+        runs-on: ubuntu-latest
+        timeout-minutes: 10
+
+        steps:
+            - name: Checkout
+              uses: actions/checkout@v7
+              with:
+                  persist-credentials: false
+
+            - name: Setup Node
+              uses: actions/setup-node@v7
+              with:
+                  node-version: 26
+                  cache: npm
+
+            # Fails here, with a message saying so, if Pages is not set to deploy from Actions.
+            - name: Configure Pages
+              uses: actions/configure-pages@v6
+
+            - name: Install
+              run: npm ci
+
+            - name: Build
+              run: npm run build
+
+            - name: Upload the catalogue
+              uses: actions/upload-pages-artifact@v5
+              with:
+                  path: dist
+
+    deploy:
+        needs: build
+        runs-on: ubuntu-latest
+        timeout-minutes: 10
+
+        # The only job with any write access, and only to Pages.
+        permissions:
+            pages: write
+            id-token: write
+
+        environment:
+            name: github-pages
+            url: ${{ steps.deployment.outputs.page_url }}
+
+        steps:
+            - name: Deploy
+              id: deployment
+              uses: actions/deploy-pages@v5
