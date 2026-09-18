@@ -94,6 +94,38 @@ const list = value =>
         .map(item => item.trim())
         .filter(item => item !== '');
 
+/** Every two-letter language, by its English name and by its own, lower-cased, to its tag. */
+const LANGUAGES_BY_NAME = (() => {
+    const english = new Intl.DisplayNames(['en'], { type: 'language' });
+    const letters = 'abcdefghijklmnopqrstuvwxyz';
+    const names = new Map();
+    for (const first of letters) {
+        for (const second of letters) {
+            const tag = first + second;
+            const name = english.of(tag);
+            if (name === undefined || name === tag) continue;
+            names.set(name.toLowerCase(), tag);
+            names.set(new Intl.DisplayNames([tag], { type: 'language' }).of(tag).toLowerCase(), tag);
+        }
+    }
+    return names;
+})();
+
+/**
+ * The tag a language answer means. The form asks for a tag, and people write "English": a name, in
+ * English or in itself, becomes its tag, and a tag in the wrong case is put right. Anything else is
+ * returned as written, for the rules to refuse with the pattern it misses.
+ */
+export const languageTag = value => {
+    const named = LANGUAGES_BY_NAME.get(value.trim().toLowerCase());
+    if (named !== undefined) return named;
+    try {
+        return Intl.getCanonicalLocales(value.trim())[0];
+    } catch {
+        return value;
+    }
+};
+
 /** A slug made from a name: what the file will be called. */
 export const slugify = name =>
     name
@@ -136,7 +168,7 @@ export function toEntry(kind, form, { login, today, existing }) {
         data = { name, url: need('url')?.replace(/\/+$/, ''), description: need('description') };
         if (get('location') !== undefined) data.location = get('location');
         if (get('genres') !== undefined) data.genres = list(get('genres'));
-        if (get('language') !== undefined) data.language = get('language');
+        if (get('language') !== undefined) data.language = languageTag(get('language'));
         slug = name === undefined ? undefined : slugify(name);
     } else if (kind === 'plugins') {
         const name = need('name');
