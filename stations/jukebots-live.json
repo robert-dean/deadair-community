@@ -1,0 +1,19 @@
+{
+    "$schema": "../schemas/station.schema.json",
+    "name": "Jukebots Live",
+    "url": "https://jukebots.live",
+    "description": "An experiment in learning how to run a radio station. A test for a future project to come.",
+    "location": "Toronto",
+    "genres": [
+        "Eclectic",
+        "90s Alternative",
+        "Metal",
+        "Glam",
+        "Weird"
+    ],
+    "language": "en",
+    "listing": {
+        "submittedBy": "drelabre",
+        "dateAdded": "2026-09-18"
+    }
+}
