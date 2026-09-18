@@ -1,0 +1,11 @@
+{
+    "$schema": "../schemas/station.schema.json",
+    "name": "Submission Test",
+    "url": "https://radio.example.org",
+    "description": "A test of the submission bot, opened by a maintainer. It will be closed without merging.",
+    "language": "en",
+    "listing": {
+        "submittedBy": "robert-dean",
+        "dateAdded": "2026-09-18"
+    }
+}
