@@ -1,14 +1,19 @@
 name: Publish
 
-# Builds catalog.json and each persona's file from main and publishes them to GitHub Pages, which
-# serves them with an open CORS header, so the site at deadair.radio can read them from the browser.
+# Builds catalog.json and each persona's file from main, asks every listed station what it is
+# playing, and publishes the lot to GitHub Pages, which serves it with an open CORS header so the
+# site at deadair.radio can read it from the browser.
 #
 # Published by an Actions deployment rather than a branch, so nothing commits to this repository and
-# its history is only the entries.
+# its history is only the entries. The schedule is what keeps status.json current; GitHub stops
+# running a schedule on a repository nobody has pushed to for sixty days, and re-enabling it is one
+# click on the Actions tab.
 on:
     push:
         branches:
             - main
+    schedule:
+        - cron: '*/15 * * * *'
     workflow_dispatch:
 
 permissions:
@@ -39,6 +44,7 @@ jobs:
 
             # Fails here, with a message saying so, if Pages is not set to deploy from Actions.
             - name: Configure Pages
+              id: pages
               uses: actions/configure-pages@v6
 
             - name: Install
@@ -46,6 +52,13 @@ jobs:
 
             - name: Build
               run: npm run build
+
+            # Reads the status.json this run replaces, so a station's last answer outlives one missed
+            # check. A station that does not answer never fails the run.
+            - name: Ask the stations what is on air
+              run: node scripts/stations.probe.mjs
+              env:
+                  PREVIOUS_STATUS_URL: ${{ steps.pages.outputs.base_url }}/status.json
 
             - name: Upload the catalogue
               uses: actions/upload-pages-artifact@v5
