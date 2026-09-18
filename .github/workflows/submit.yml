@@ -11,6 +11,12 @@ name: Submit
 # - The workflow that runs is always the one on main: an `issues` event never runs a workflow from a
 #   fork or a branch, so a submission cannot change what judges it.
 # - Nothing merges. The bot's branch is a proposal a maintainer reads.
+#
+# The branch, the pull request and the comments are made as a GitHub App, not with the workflow's
+# own token: GitHub starts no workflow for a push or a pull request made with that token, so a
+# submission's pull request was never checked. The App needs Contents, Pull requests and Issues (read
+# and write) on this repository. Its client ID is the SUBMIT_APP_CLIENT_ID variable, and its private
+# key the SUBMIT_APP_PRIVATE_KEY secret.
 on:
     issues:
         types: [opened, edited, reopened]
@@ -34,9 +40,7 @@ jobs:
         timeout-minutes: 10
 
         permissions:
-            contents: write
-            pull-requests: write
-            issues: write
+            contents: read
 
         steps:
             - name: Checkout
@@ -58,10 +62,21 @@ jobs:
               id: entry
               run: node scripts/submission.run.mjs
 
+            # After the script, so nothing the issue says runs while the token exists.
+            - name: Get the App's token
+              id: app
+              uses: actions/create-github-app-token@v3
+              with:
+                  client-id: ${{ vars.SUBMIT_APP_CLIENT_ID }}
+                  private-key: ${{ secrets.SUBMIT_APP_PRIVATE_KEY }}
+                  permission-contents: write
+                  permission-pull-requests: write
+                  permission-issues: write
+
             - name: Say what has to change
               if: steps.entry.outputs.ok != 'true'
               env:
-                  GH_TOKEN: ${{ github.token }}
+                  GH_TOKEN: ${{ steps.app.outputs.token }}
                   ISSUE: ${{ github.event.issue.number }}
               run: gh issue comment "$ISSUE" --repo "$GITHUB_REPOSITORY" --body-file "$RUNNER_TEMP/submission.md"
 
@@ -70,14 +85,16 @@ jobs:
             - name: Open or update the pull request
               if: steps.entry.outputs.ok == 'true'
               env:
-                  GH_TOKEN: ${{ github.token }}
+                  GH_TOKEN: ${{ steps.app.outputs.token }}
+                  APP: ${{ steps.app.outputs.app-slug }}
                   ISSUE: ${{ github.event.issue.number }}
                   AUTHOR: ${{ github.event.issue.user.login }}
                   ENTRY: ${{ steps.entry.outputs.path }}
               run: |
                   branch="submission/$ISSUE"
-                  git config user.name 'github-actions[bot]'
-                  git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+                  bot="${APP}[bot]"
+                  git config user.name "$bot"
+                  git config user.email "$(gh api "/users/$bot" --jq .id)+$bot@users.noreply.github.com"
                   git switch -c "$branch"
                   git add -- "$ENTRY"
                   git commit -m "Add $ENTRY" -m "Submitted by @$AUTHOR in #$ISSUE."
