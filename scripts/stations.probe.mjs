@@ -22,24 +22,34 @@ const TIMEOUT_MS = 8_000;
 const MAX_BYTES = 64 * 1024;
 const USER_AGENT = 'deadair-community-directory (+https://deadair.radio/community/stations)';
 
-/** The body of a JSON answer, or undefined for anything else: a timeout, a refusal, an error status, too much, not JSON. */
-async function fetchJson(url) {
+/**
+ * The body of a JSON answer, or undefined for anything else: a timeout, a refusal, an error status,
+ * too much, not JSON. `why` hears the reason, since "not answering" alone tells a maintainer nothing.
+ */
+async function fetchJson(url, why = () => {}) {
     try {
         const response = await fetch(url, {
             headers: { accept: 'application/json', 'user-agent': USER_AGENT },
             signal: AbortSignal.timeout(TIMEOUT_MS),
         });
-        if (!response.ok || response.body === null) return undefined;
+        if (!response.ok || response.body === null) {
+            why(`answered ${response.status}${response.headers.get('cf-mitigated') ? ' (a Cloudflare challenge)' : ''}`);
+            return undefined;
+        }
 
         const chunks = [];
         let size = 0;
         for await (const chunk of response.body) {
             size += chunk.byteLength;
-            if (size > MAX_BYTES) return undefined;
+            if (size > MAX_BYTES) {
+                why(`answered more than ${MAX_BYTES} bytes`);
+                return undefined;
+            }
             chunks.push(chunk);
         }
         return JSON.parse(Buffer.concat(chunks).toString('utf8'));
-    } catch {
+    } catch (error) {
+        why(error instanceof SyntaxError ? 'answered something that is not JSON' : `could not be reached: ${error.cause?.code ?? error.name}`);
         return undefined;
     }
 }
@@ -52,7 +62,7 @@ const previousStations = previous?.format === STATUS_FORMAT && typeof previous.s
 const checkedAt = new Date().toISOString();
 const results = await Promise.all(
     catalog.stations.map(async ({ slug, url }) => {
-        const answer = await fetchJson(`${url}/api/nowplaying`);
+        const answer = await fetchJson(`${url}/api/nowplaying`, reason => console.log(`${slug}: ${reason}`));
         return [slug, stationStatus({ answer, checkedAt, previous: previousStations[slug] })];
     }),
 );
