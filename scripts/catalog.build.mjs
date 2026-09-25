@@ -5,7 +5,8 @@
  *     node scripts/catalog.build.mjs           check, then write dist/
  *     node scripts/catalog.build.mjs --check   check only, which is what a pull request runs
  *
- * dist/ holds catalog.json, each persona's file under personas/, and the schemas, so an entry's
+ * dist/ holds catalog.json, each persona's file under personas/ and each language pack under languages/,
+ * and the schemas, so an entry's
  * "$schema" resolves in an editor.
  */
 import { cpSync, mkdirSync, rmSync, writeFileSync } from 'node:fs';
