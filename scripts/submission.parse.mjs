@@ -10,10 +10,10 @@
  * here as data, then checked by the same rules as a hand-written entry; the workflow never puts it
  * into a shell.
  */
-import { SLUG_PATTERN } from './catalog.rules.mjs';
+import { canonicalLocale, SLUG_PATTERN } from './catalog.rules.mjs';
 
 /** The label that marks an issue as a submission, and which kind it is. */
-export const SUBMISSION_LABELS = { 'add-station': 'stations', 'add-plugin': 'plugins', 'add-persona': 'personas', 'add-app': 'apps' };
+export const SUBMISSION_LABELS = { 'add-station': 'stations', 'add-plugin': 'plugins', 'add-persona': 'personas', 'add-app': 'apps', 'add-language': 'languages' };
 
 /** Field labels, per kind, exactly as the forms word them. */
 export const FIELDS = {
@@ -43,6 +43,11 @@ export const FIELDS = {
         summary: 'One line for the card',
         author: 'Author',
         file: 'Exported file',
+    },
+    languages: {
+        url: 'Where the file is',
+        translators: 'Translated by',
+        summary: 'One line for the card',
     },
     apps: {
         name: 'Name',
@@ -146,11 +151,14 @@ export const slugify = name =>
  *
  * @param {string} kind
  * @param {Map<string, string>} form
- * @param {{ login: string, today: string, existing?: (slug: string) => { listing?: { submittedBy?: string, dateAdded?: string } } | undefined }} context
- *   `existing` answers the entry already at a slug, if there is one.
+ * @param {{ login: string, today: string, existing?: (slug: string) => { listing?: { submittedBy?: string, dateAdded?: string } } | undefined, file?: unknown }} context
+ *   `existing` answers the entry already at a slug, if there is one. `file` is a language pack the
+ *   workflow downloaded from the address the form gave, already parsed: a pack is too big for an
+ *   issue, so it never arrives in the form itself, and fetching it is the workflow's business.
  * @returns {{ slug: string, data: object } | { problems: string[] }}
  */
-export function toEntry(kind, form, { login, today, existing }) {
+export function toEntry(kind, form, context) {
+    const { login, today, existing } = context;
     const labels = FIELDS[kind];
     const get = field => form.get(labels[field]);
     const problems = [];
@@ -214,6 +222,22 @@ export function toEntry(kind, form, { login, today, existing }) {
         const characters = data.file?.personas;
         if (Array.isArray(characters) && characters.length === 1 && typeof characters[0]?.key === 'string') slug = characters[0].key;
         else if (data.file !== undefined) problems.push('the exported file must hold exactly one character: export that one alone from its own page in the console');
+    } else if (kind === 'languages') {
+        const url = need('url');
+        data = { translators: need('translators') };
+        if (get('summary') !== undefined) data.summary = get('summary');
+        if (url === undefined) {
+            // Already reported as required.
+        } else if (context.file === undefined) {
+            problems.push('the language pack could not be read from that address');
+        } else {
+            data.file = context.file;
+            // Named by its language, because a station holds one pack per language. A tag the rules
+            // would refuse leaves no name here; the rules say why once the entry is checked.
+            const locale = typeof context.file?.locale === 'string' ? canonicalLocale(context.file.locale) : undefined;
+            if (locale !== undefined) slug = locale.toLowerCase();
+            else problems.push('the pack does not say which language it is in, as a language tag such as de or pt-BR');
+        }
     } else {
         return { problems: [`unknown kind "${kind}"`] };
     }

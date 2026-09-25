@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
-import { assembleCatalog, checkEntries, PERSONA_FILE_FORMAT } from '../scripts/catalog.rules.mjs';
+import { assembleCatalog, CATALOG_LIMITS, checkEntries, LANGUAGE_PACK_FORMAT, PERSONA_FILE_FORMAT } from '../scripts/catalog.rules.mjs';
 
 const listing = { submittedBy: 'someone', dateAdded: '2026-09-18' };
 
@@ -60,6 +60,24 @@ const persona = (slug = 'the-archivist', { characters = [character(slug)], forma
         listing,
         ...data,
     },
+});
+
+const pack = (file = {}) => ({
+    format: LANGUAGE_PACK_FORMAT,
+    version: 1,
+    locale: 'de',
+    name: 'Deutsch',
+    direction: 'ltr',
+    madeFor: '0.35.0',
+    catalog: { common: { action: { cancel: 'Abbrechen', dismiss: 'Schließen' } } },
+    ...file,
+});
+
+const language = (slug = 'de', { file = {}, data = {} } = {}) => ({
+    kind: 'languages',
+    slug,
+    path: `languages/${slug}.json`,
+    data: { translators: 'Someone', file: pack(file), listing, ...data },
 });
 
 const messages = entries => checkEntries(entries).map(problem => `${problem.path}: ${problem.message}`);
@@ -152,3 +170,69 @@ describe('assembleCatalog', () => {
         assert.equal('$schema' in catalog.stations[1], false);
     });
 });
+
+describe('language entries', () => {
+    it('accept a pack named after its language', () => {
+        assert.deepEqual(messages([language(), language('pt-br', { file: { locale: 'pt-BR', name: 'Português' } })]), []);
+    });
+
+    it('refuse a pack whose name is not its language', () => {
+        assert.deepEqual(messages([language('german')]), ['languages/german.json: the file must be named after its language: languages/de.json for "de"']);
+    });
+
+    it('refuse English, which every console has built in', () => {
+        assert.deepEqual(messages([language('en-gb', { file: { locale: 'en-GB' } })]), [
+            'languages/en-gb.json: file.locale is English, which is built into the console and is what every other language falls back to',
+        ]);
+    });
+
+    it('refuse a tag that is not one', () => {
+        assert.match(messages([language('xx', { file: { locale: 'not a tag!' } })])[0], /is not a language tag/);
+    });
+
+    it('refuse a newer format than a station reads', () => {
+        assert.match(messages([language('de', { file: { version: 2 } })])[0], /reads packs up to version 1/);
+    });
+
+    it('refuse a key the station would refuse, since its import validates strictly', () => {
+        assert.match(messages([language('de', { file: { translatedWith: 'a tool' } })])[0], /must NOT have additional properties/);
+    });
+
+    it('refuse a catalog that is not text', () => {
+        assert.deepEqual(messages([language('de', { file: { catalog: { common: { action: { cancel: 42 } } } } })]), [
+            'languages/de.json: file.catalog: "common.action.cancel" is neither text nor a group of strings',
+        ]);
+    });
+
+    it('refuse a string longer than the station stores', () => {
+        assert.match(messages([language('de', { file: { catalog: { common: { long: 'x'.repeat(CATALOG_LIMITS.stringLength + 1) } } } })])[0], /is longer than/);
+    });
+
+    it('refuse an empty catalog', () => {
+        assert.deepEqual(messages([language('de', { file: { catalog: {} } })]), ['languages/de.json: file.catalog holds no strings']);
+    });
+});
+
+describe('assembleCatalog, languages', () => {
+    it('publishes each pack on its own, and lists its header and how many strings it has, never the strings', () => {
+        const entry = language('de', { data: { summary: 'Reviewed by two native speakers.' } });
+        const { catalog, files } = assembleCatalog([entry], { builtAt: 'now' });
+
+        assert.deepEqual(files, { 'languages/de.json': entry.data.file });
+        assert.deepEqual(catalog.languages, [
+            {
+                slug: 'de',
+                locale: 'de',
+                name: 'Deutsch',
+                direction: 'ltr',
+                madeFor: '0.35.0',
+                strings: 2,
+                translators: 'Someone',
+                summary: 'Reviewed by two native speakers.',
+                listing,
+                download: 'languages/de.json',
+            },
+        ]);
+    });
+});
+

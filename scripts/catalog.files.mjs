@@ -10,7 +10,7 @@ import { KINDS } from './catalog.rules.mjs';
 export const root = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 
 /**
- * Every file under the four directories, read and parsed. A file that is not `<slug>.json` is an
+ * Every file under the entry directories, read and parsed. A file that is not `<slug>.json` is an
  * entry that fails rather than one that is skipped, so a stray file is noticed.
  *
  * @returns {import('./catalog.rules.mjs').Entry[]}

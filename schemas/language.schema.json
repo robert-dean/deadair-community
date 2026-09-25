@@ -1,0 +1,26 @@
+{
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "$id": "https://robert-dean.github.io/deadair-community/schemas/language.schema.json",
+    "title": "Language",
+    "description": "A translation of the deadair console: a language pack, exactly as the console's Settings, Languages exports and imports it, published on its own so that Import takes the download as it stands. One entry per language, named by its tag.",
+    "type": "object",
+    "properties": {
+        "$schema": { "type": "string" },
+        "translators": {
+            "description": "Who translated it, as they want to be credited.",
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200
+        },
+        "summary": {
+            "description": "One line for the card, if there is something to say: how complete it is, who reviewed it, which variety of the language it follows.",
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 160
+        },
+        "file": { "$ref": "language.pack.schema.json" },
+        "listing": { "$ref": "listing.schema.json" }
+    },
+    "required": ["translators", "file", "listing"],
+    "additionalProperties": false
+}

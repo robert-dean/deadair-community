@@ -15,7 +15,7 @@ const render = fields =>
 const context = { login: 'someone', today: '2026-09-18' };
 
 describe('the forms and the parser agree', () => {
-    const forms = { stations: 'add-station', plugins: 'add-plugin', personas: 'add-persona', apps: 'add-app' };
+    const forms = { stations: 'add-station', plugins: 'add-plugin', personas: 'add-persona', apps: 'add-app', languages: 'add-language' };
 
     for (const [kind, name] of Object.entries(forms)) {
         it(`every ${kind} label is one ${name}.yml renders, and the form sets its label`, () => {
@@ -161,6 +161,49 @@ describe('toEntry', () => {
             submittedBy: 'someone',
             dateAdded: '2026-01-01',
             dateModified: '2026-09-18',
+        });
+    });
+
+    describe('a language', () => {
+        const pack = {
+            format: 'deadair.console-language',
+            version: 1,
+            locale: 'pt-br',
+            name: 'Português',
+            direction: 'ltr',
+            madeFor: '0.35.0',
+            catalog: { common: { action: { cancel: 'Cancelar' } } },
+        };
+        const form = readForm(render({ 'Where the file is': 'https://example.org/pt-BR.json', 'Translated by': 'Someone', 'One line for the card': 'Brazilian.' }));
+
+        it('is named by the language the downloaded pack is in, and passes the rules', () => {
+            const result = toEntry('languages', form, { ...context, file: pack });
+
+            assert.equal(result.slug, 'pt-br');
+            assert.equal(result.data.$schema, '../schemas/language.schema.json');
+            assert.equal(result.data.summary, 'Brazilian.');
+            assert.deepEqual(result.data.file, pack);
+            assert.deepEqual(checkEntries([{ kind: 'languages', slug: result.slug, path: 'x', data: result.data }]), []);
+        });
+
+        it('says so when the file could not be read from the address', () => {
+            assert.deepEqual(toEntry('languages', form, context).problems, ['the language pack could not be read from that address']);
+        });
+
+        it('says only that the address is missing when there is none', () => {
+            const blank = readForm(render({ 'Where the file is': undefined, 'Translated by': 'Someone' }));
+            assert.deepEqual(toEntry('languages', blank, context).problems, ['"Where the file is" is required']);
+        });
+
+        it('needs the pack to say which language it is in', () => {
+            assert.deepEqual(toEntry('languages', form, { ...context, file: { ...pack, locale: 'not a tag!' } }).problems, [
+                'the pack does not say which language it is in, as a language tag such as de or pt-BR',
+            ]);
+        });
+
+        it('will not overwrite somebody else’s language', () => {
+            const existing = () => ({ listing: { submittedBy: 'first', dateAdded: '2026-09-01' } });
+            assert.match(toEntry('languages', form, { ...context, file: pack, existing }).problems[0], /already listed by @first/);
         });
     });
 });
