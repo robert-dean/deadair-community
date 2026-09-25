@@ -1,7 +1,7 @@
 {
     "name": "deadair-community",
     "private": true,
-    "description": "The deadair community catalogue: stations, plugins, personas and apps, one file per entry.",
+    "description": "The deadair community catalogue: stations, plugins, personas, apps and languages, one file per entry.",
     "license": "CC0-1.0",
     "type": "module",
     "engines": {
