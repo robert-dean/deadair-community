@@ -15,7 +15,7 @@ import { createHash } from 'node:crypto';
 import { appendFileSync, existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { readEntries, root } from './catalog.files.mjs';
-import { checkEntries } from './catalog.rules.mjs';
+import { CATALOG_LIMITS, checkEntries } from './catalog.rules.mjs';
 import { FIELDS, readForm, SUBMISSION_LABELS, toEntry } from './submission.parse.mjs';
 
 const temp = process.env.RUNNER_TEMP ?? join(root, 'dist');
@@ -72,6 +72,34 @@ async function inspectTarball(url, version) {
     return problems.length > 0 ? { problems } : { sha256 };
 }
 
+/**
+ * A language pack is too big for an issue, so the form gives an address and this fetches the file
+ * once, capped a little above the largest catalog a station stores. Parsed as data and nothing else;
+ * the rules then judge it as they judge a pack added by hand.
+ */
+const MAX_PACK_BYTES = CATALOG_LIMITS.bytes + 64 * 1024;
+
+async function downloadPack(url) {
+    if (!/^https:\/\/\S+$/.test(url)) return { problems: ['the address must be https'] };
+    let text;
+    try {
+        const response = await fetch(url, { signal: AbortSignal.timeout(60_000) });
+        if (!response.ok) return { problems: [`the address answered ${response.status}`] };
+        const declared = Number(response.headers.get('content-length'));
+        if (declared > MAX_PACK_BYTES) return { problems: ['the file is larger than 2 MB, which is more than a station stores'] };
+        const bytes = Buffer.from(await response.arrayBuffer());
+        if (bytes.byteLength > MAX_PACK_BYTES) return { problems: ['the file is larger than 2 MB, which is more than a station stores'] };
+        text = bytes.toString('utf8');
+    } catch (error) {
+        return { problems: [`the file could not be downloaded: ${error.message}`] };
+    }
+    try {
+        return { file: JSON.parse(text) };
+    } catch {
+        return { problems: ['that address does not answer with JSON. Give the Raw link to the file itself, not a page showing it'] };
+    }
+}
+
 const event = JSON.parse(readFileSync(process.env.GITHUB_EVENT_PATH, 'utf8'));
 const { issue } = event;
 const kinds = (issue.labels ?? []).map(label => SUBMISSION_LABELS[label.name]).filter(kind => kind !== undefined);
@@ -83,7 +111,16 @@ const existing = slug => {
     const file = join(root, kind, `${slug}.json`);
     return existsSync(file) ? JSON.parse(readFileSync(file, 'utf8')) : undefined;
 };
-const result = toEntry(kind, form, { login: issue.user.login, today: new Date().toISOString().slice(0, 10), existing });
+let file;
+if (kind === 'languages') {
+    const url = form.get(FIELDS.languages.url);
+    if (url !== undefined) {
+        const downloaded = await downloadPack(url.trim());
+        if ('problems' in downloaded) finish({ ok: false, kind, message: refused(downloaded.problems) });
+        file = downloaded.file;
+    }
+}
+const result = toEntry(kind, form, { login: issue.user.login, today: new Date().toISOString().slice(0, 10), existing, file });
 if ('problems' in result) finish({ ok: false, kind, message: refused(result.problems) });
 
 const { slug, data } = result;

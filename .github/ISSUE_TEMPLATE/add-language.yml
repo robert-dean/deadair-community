@@ -1,0 +1,27 @@
+name: Share a language
+description: Share a translation of the deadair console, so other stations can show it in your language.
+title: 'Share a language: '
+labels: [add-language]
+body:
+    - type: markdown
+      attributes:
+          value: |
+              In the console, open **Settings, Languages** and export your language, or use the file you translated from the English template. A pack is too big to paste into an issue, so put the file somewhere it can be downloaded and give its address below: a gist's **Raw** link, a file in a repository opened with **Raw**, or a release asset.
+
+              The file becomes public and is dedicated to the public domain so anybody can use it. There is one entry per language, named by its tag (`de`, `pt-BR`), and only you can replace the one you submit, so if somebody has already shared your language, talk to them first.
+    - type: input
+      attributes:
+          label: Where the file is
+          description: An https address that downloads the .json file itself, not a page showing it. At most 2 MB.
+      validations:
+          required: true
+    - type: input
+      attributes:
+          label: Translated by
+          description: Who translated it, as they want to be credited.
+      validations:
+          required: true
+    - type: input
+      attributes:
+          label: One line for the card
+          description: Optional. How complete it is, who reviewed it, which variety of the language it follows. At most 160 characters.
