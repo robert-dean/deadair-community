@@ -1,0 +1,19 @@
+{
+    "$schema": "../schemas/plugin.schema.json",
+    "id": "radio.vellichor.books",
+    "name": "Vellichor books",
+    "description": "Reads EPUB books aloud as narration, a chapter at every narration band. Each book on its shelf lists as a series and each chapter as a piece of it, taken from EPUB addresses the operator gives (Project Gutenberg, Standard Ebooks, a Calibre-Web instance, or their own file server), cleaned of markup and footnotes and cached so a book is not fetched again.",
+    "author": "VinewZ",
+    "repository": "https://github.com/VinewZ/deadair-vellichor-plugin",
+    "license": "MIT",
+    "version": "0.1.2",
+    "apiVersion": "^1.0.0",
+    "capabilities": ["narration"],
+    "hosts": [],
+    "hostsFromConfig": true,
+    "package": {
+        "tarball": "https://github.com/VinewZ/deadair-vellichor-plugin/releases/download/v0.1.2/deadair-plugin-vellichor-books-0.1.2.tgz",
+        "sha256": "55857cc93c6b4ca94535a656bbf6b835ab33b3112463155ee45fbfeb356182bc"
+    },
+    "listing": { "submittedBy": "robert-dean", "dateAdded": "2026-09-25" }
+}
