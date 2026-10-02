@@ -3,7 +3,8 @@
 ## The easy way
 
 Open the form for what you are adding. A bot turns your answers into a pull request with one file
-in it, or comments on the issue with what has to change; edit the issue and it tries again.
+in it, or comments on the issue with what has to change; edit the issue and it tries again, and
+updates that one comment with the answer rather than adding another.
 
 - [Add a station](https://github.com/robert-dean/deadair-community/issues/new?template=add-station.yml)
 - [Share a persona](https://github.com/robert-dean/deadair-community/issues/new?template=add-persona.yml)
