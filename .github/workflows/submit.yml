@@ -76,10 +76,7 @@ jobs:
 
             - name: Say what has to change
               if: steps.entry.outputs.ok != 'true'
-              env:
-                  GH_TOKEN: ${{ steps.app.outputs.token }}
-                  ISSUE: ${{ github.event.issue.number }}
-              run: gh issue comment "$ISSUE" --repo "$GITHUB_REPOSITORY" --body-file "$RUNNER_TEMP/submission.md"
+              run: cp "$RUNNER_TEMP/submission.md" "$RUNNER_TEMP/status.md"
 
             # One branch per issue, rewritten on every edit, so the pull request always shows the entry
             # as the issue now describes it.
@@ -104,7 +101,28 @@ jobs:
                   existing="$(gh pr list --repo "$GITHUB_REPOSITORY" --head "$branch" --state open --json number --jq '.[0].number')"
                   if [ -n "$existing" ]; then
                       gh pr edit "$existing" --repo "$GITHUB_REPOSITORY" --body-file "$RUNNER_TEMP/submission.md"
-                      gh issue comment "$ISSUE" --repo "$GITHUB_REPOSITORY" --body "Updated #$existing from this edit."
+                      echo "Updated #$existing from the issue as it now stands." > "$RUNNER_TEMP/status.md"
                   else
-                      gh pr create --repo "$GITHUB_REPOSITORY" --base main --head "$branch" --title "Add $ENTRY" --body-file "$RUNNER_TEMP/submission.md"
+                      created="$(gh pr create --repo "$GITHUB_REPOSITORY" --base main --head "$branch" --title "Add $ENTRY" --body-file "$RUNNER_TEMP/submission.md")"
+                      echo "Opened #${created##*/} for a maintainer to read." > "$RUNNER_TEMP/status.md"
+                  fi
+
+            # One comment per issue, edited by every later run, so an issue edited five times carries one
+            # answer, and it is the current one. The marker is how a run finds it again: the bot's other
+            # comments, if a maintainer ever has it write any, are left alone.
+            - name: Answer on the issue
+              env:
+                  GH_TOKEN: ${{ steps.app.outputs.token }}
+                  APP: ${{ steps.app.outputs.app-slug }}
+                  ISSUE: ${{ github.event.issue.number }}
+              run: |
+                  marker='<!-- deadair-submission-status -->'
+                  { echo "$marker"; cat "$RUNNER_TEMP/status.md"; } > "$RUNNER_TEMP/comment.md"
+                  comment="$(gh api --paginate "repos/$GITHUB_REPOSITORY/issues/$ISSUE/comments" \
+                      | jq -r --arg bot "${APP}[bot]" --arg marker "$marker" '.[] | select(.user.login == $bot and (.body | startswith($marker))) | .id' \
+                      | head -n 1)"
+                  if [ -n "$comment" ]; then
+                      gh api --method PATCH "repos/$GITHUB_REPOSITORY/issues/comments/$comment" -F "body=@$RUNNER_TEMP/comment.md" --silent
+                  else
+                      gh issue comment "$ISSUE" --repo "$GITHUB_REPOSITORY" --body-file "$RUNNER_TEMP/comment.md"
                   fi

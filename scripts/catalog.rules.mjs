@@ -47,6 +47,56 @@ const schemaFor = { stations: 'station', plugins: 'plugin', apps: 'app', persona
 const schemasDir = join(dirname(fileURLToPath(import.meta.url)), '..', 'schemas');
 const readSchema = name => JSON.parse(readFileSync(join(schemasDir, `${name}.schema.json`), 'utf8'));
 
+/** A name only a home or private network answers to: a single label, or one of the suffixes set aside for one. */
+const PRIVATE_NAME = /^[^.]+$|\.(?:local|localhost|lan|home|internal|intranet|corp|home\.arpa)$/;
+
+/** Whether a dotted IPv4 address is loopback, link-local, carrier-grade NAT or one of the ranges a router hands out. */
+const privateIPv4 = host => {
+    const [a, b] = host.split('.').map(Number);
+    return a === 0 || a === 10 || a === 127 || (a === 100 && b >= 64 && b <= 127) || (a === 169 && b === 254) || (a === 172 && b >= 16 && b <= 31) || (a === 192 && b === 168);
+};
+
+/** The same for IPv6: loopback, unique-local and link-local. */
+const privateIPv6 = host => host === '::1' || /^f[cd]/i.test(host) || /^fe[89ab]/i.test(host);
+
+let stationUrlPattern;
+
+/**
+ * What is wrong with a station's address, as a sentence the person who typed it can act on, or
+ * `undefined` when there is nothing. The schema's pattern says the same about shape, but a submitter
+ * shown the pattern pasted the pattern back as their address; this is what they are shown instead.
+ *
+ * It also refuses what the pattern cannot see: an address on a home network, which the directory's
+ * probe and every listener would fail to reach however well it is written.
+ *
+ * @param {string} url
+ * @returns {string | undefined}
+ */
+export function stationAddressProblem(url) {
+    stationUrlPattern ??= new RegExp(readSchema('station').properties.url.pattern);
+    let parsed;
+    try {
+        parsed = new URL(url);
+    } catch {
+        parsed = undefined;
+    }
+    // The network first: an address that only works at home stays unlistable whatever its scheme, and
+    // asking for https before saying so costs the submitter an edit that cannot help.
+    const host = parsed?.hostname;
+    if (host !== undefined && /^https?:$/.test(parsed.protocol)) {
+        const bare = host.replace(/^\[|\]$/g, '');
+        const isPrivate = /^\d+\.\d+\.\d+\.\d+$/.test(bare) ? privateIPv4(bare) : bare.includes(':') ? privateIPv6(bare) : PRIVATE_NAME.test(bare.toLowerCase());
+        if (isPrivate) {
+            return `${host} is an address on a home or private network, so nobody outside that network can reach it. The directory needs the station's public address; one that only works at home cannot be listed`;
+        }
+    }
+    if (/^http:\/\//i.test(url)) return 'it has to start with https://, because the directory and the apps reach a station over https only';
+    if (host === undefined || !stationUrlPattern.test(url)) {
+        return 'it has to be the web address the station is served from, such as https://radio.example.org, with nothing after the path';
+    }
+    return undefined;
+}
+
 /** Compiled once: one validator per kind, sharing the provenance, persona-file and language-pack schemas they reference. */
 function compileValidators() {
     const ajv = new Ajv2020({ allErrors: true, strict: true, allowUnionTypes: true });
@@ -107,6 +157,11 @@ function ruleProblems({ kind, slug, data }) {
     const { listing } = data;
     if (listing.dateModified !== undefined && listing.dateModified < listing.dateAdded) {
         problems.push('listing.dateModified is before listing.dateAdded');
+    }
+
+    if (kind === 'stations') {
+        const problem = stationAddressProblem(data.url);
+        if (problem !== undefined) problems.push(`url: ${problem}`);
     }
 
     if (kind === 'plugins' && data.id.startsWith('deadair.')) {

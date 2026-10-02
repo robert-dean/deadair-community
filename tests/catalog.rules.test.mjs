@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
-import { assembleCatalog, CATALOG_LIMITS, checkEntries, LANGUAGE_PACK_FORMAT, PERSONA_FILE_FORMAT } from '../scripts/catalog.rules.mjs';
+import { assembleCatalog, CATALOG_LIMITS, checkEntries, LANGUAGE_PACK_FORMAT, PERSONA_FILE_FORMAT, stationAddressProblem } from '../scripts/catalog.rules.mjs';
 
 const listing = { submittedBy: 'someone', dateAdded: '2026-09-18' };
 
@@ -127,6 +127,11 @@ describe('checkEntries', () => {
         assert.ok(problems.some(problem => /\/url must match pattern/.test(problem)));
     });
 
+    it('refuses a station address on a home network, which the pattern alone lets through', () => {
+        const [problem] = messages([station('night-shift', { url: 'https://192.168.1.10:8080' })]);
+        assert.match(problem, /^stations\/night-shift\.json: url: 192\.168\.1\.10 is an address on a home or private network/);
+    });
+
     it('refuses a capability the SDK does not have', () => {
         const problems = messages([plugin('bandcamp', { capabilities: ['telepathy'] })]);
         assert.ok(problems.some(problem => /\/capabilities\/0/.test(problem)));
@@ -236,3 +241,42 @@ describe('assembleCatalog, languages', () => {
     });
 });
 
+
+describe('stationAddressProblem', () => {
+    it('accepts a public address, with a port or a path', () => {
+        for (const url of ['https://radio.example.org', 'https://radio.example.org:8443', 'https://example.org/radio', 'https://203.0.113.7', 'https://172.32.0.1']) {
+            assert.equal(stationAddressProblem(url), undefined, url);
+        }
+    });
+
+    it('asks for https by name rather than by pattern', () => {
+        assert.match(stationAddressProblem('http://radio.example.org'), /has to start with https:\/\//);
+    });
+
+    it('describes the shape it wants instead of quoting the pattern back', () => {
+        // What a submitter pasted after being shown the pattern.
+        const problem = stationAddressProblem('https://[^/?#\\s]+(?:/[^?#\\s]*[^/?#\\s])?$');
+        assert.match(problem, /such as https:\/\/radio\.example\.org/);
+        assert.doesNotMatch(problem, /\[\^/);
+        assert.match(stationAddressProblem('https://radio.example.org/?listen=1'), /nothing after the path/);
+    });
+
+    it('refuses addresses only a home or private network answers', () => {
+        const home = [
+            'https://192.168.1.10:8080',
+            'https://10.0.0.5',
+            'https://172.20.1.1',
+            'https://127.0.0.1',
+            'https://100.100.1.1',
+            'https://169.254.0.9',
+            'https://[::1]',
+            'https://[fd12::1]',
+            'https://tower.local:8080',
+            'https://tower',
+            'https://localhost',
+            'https://radio.home.arpa',
+            'https://nas.lan',
+        ];
+        for (const url of home) assert.match(stationAddressProblem(url) ?? '', /home or private network/, url);
+    });
+});

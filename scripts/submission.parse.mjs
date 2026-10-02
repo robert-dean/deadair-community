@@ -10,7 +10,7 @@
  * here as data, then checked by the same rules as a hand-written entry; the workflow never puts it
  * into a shell.
  */
-import { canonicalLocale, SLUG_PATTERN } from './catalog.rules.mjs';
+import { canonicalLocale, SLUG_PATTERN, stationAddressProblem } from './catalog.rules.mjs';
 
 /** The label that marks an issue as a submission, and which kind it is. */
 export const SUBMISSION_LABELS = { 'add-station': 'stations', 'add-plugin': 'plugins', 'add-persona': 'personas', 'add-app': 'apps', 'add-language': 'languages' };
@@ -174,6 +174,9 @@ export function toEntry(kind, form, context) {
     if (kind === 'stations') {
         const name = need('name');
         data = { name, url: need('url')?.replace(/\/+$/, ''), description: need('description') };
+        // Said here, in the form's words, so the submitter never sees the schema's pattern instead.
+        const problem = data.url === undefined ? undefined : stationAddressProblem(data.url);
+        if (problem !== undefined) problems.push(`"${labels.url}": ${problem}.`);
         if (get('location') !== undefined) data.location = get('location');
         if (get('genres') !== undefined) data.genres = list(get('genres'));
         if (get('language') !== undefined) data.language = languageTag(get('language'));
