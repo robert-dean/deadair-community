@@ -18,7 +18,7 @@ body:
     - type: input
       attributes:
           label: Address
-          description: The station's public https address, the one its console and its stream are served from.
+          description: The station's public https address, the one its console and its stream are served from. An address that only works on your home network (192.168.…, 10.…, a .local name) cannot be listed, because nobody else can reach it.
           placeholder: https://radio.example.org
       validations:
           required: true

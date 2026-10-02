@@ -94,6 +94,16 @@ describe('toEntry', () => {
         assert.deepEqual(checkEntries([{ kind: 'stations', slug: result.slug, path: 'x', data: result.data }]), []);
     });
 
+    it('says what is wrong with a station address in the form\'s words, never the schema\'s pattern', () => {
+        const station = Address => toEntry('stations', readForm(render({ 'Station name': 'Broken Ash', Address, 'About the station': 'x' })), context).problems;
+
+        // Issue 10's three answers, in the order they were given.
+        assert.match(station('http://192.168.1.10:8080')[0], /^"Address": 192\.168\.1\.10 is an address on a home or private network/);
+        assert.match(station('http://tower.local:8080')[0], /^"Address": tower\.local is an address on a home or private network/);
+        assert.match(station('https://[^/?#\\s]+(?:/[^?#\\s]*[^/?#\\s])?$')[0], /^"Address": it has to be the web address the station is served from/);
+        assert.match(station('http://radio.example.org')[0], /^"Address": it has to start with https:\/\//);
+    });
+
     it('makes a plugin from ticked boxes and a host per line', () => {
         const form = readForm(
             render({
