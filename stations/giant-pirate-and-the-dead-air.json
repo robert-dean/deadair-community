@@ -1,0 +1,17 @@
+{
+    "$schema": "../schemas/station.schema.json",
+    "name": "Giant Pirate and the Dead Air",
+    "url": "https://www.giantpirateradio.com",
+    "description": "The Giant Pirate and the Dead Air is a station hosted by STEVO, the GIANT PIRATE! He tells you all sorts of interesting things when he speaks up.",
+    "location": "las vegas",
+    "genres": [
+        "EDM",
+        "dubstep",
+        "and what ever comes up really."
+    ],
+    "language": "en",
+    "listing": {
+        "submittedBy": "ssj4evostevo",
+        "dateAdded": "2026-10-06"
+    }
+}
