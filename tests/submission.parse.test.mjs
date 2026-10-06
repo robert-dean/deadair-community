@@ -104,6 +104,18 @@ describe('toEntry', () => {
         assert.match(station('http://radio.example.org')[0], /^"Address": it has to start with https:\/\//);
     });
 
+    it('puts https:// in front of a station address typed without it', () => {
+        const station = Address => toEntry('stations', readForm(render({ 'Station name': 'Giant Pirate', Address, 'About the station': 'x' })), context);
+
+        // Issue 12's address, as it was typed.
+        assert.equal(station('giantpirateradio.com').data.url, 'https://giantpirateradio.com');
+        assert.equal(station('www.giantpirateradio.com/').data.url, 'https://www.giantpirateradio.com');
+        assert.equal(station('giantpirateradio.com').problems, undefined);
+        // Assuming https never makes a home address listable.
+        assert.match(station('192.168.1.10:8080').problems[0], /^"Address": 192\.168\.1\.10 is an address on a home or private network/);
+        assert.match(station('tower.local:8080').problems[0], /^"Address": tower\.local is an address on a home or private network/);
+    });
+
     it('makes a plugin from ticked boxes and a host per line', () => {
         const form = readForm(
             render({

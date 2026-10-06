@@ -143,6 +143,21 @@ export const slugify = name =>
         .replace(/-+$/, '');
 
 /**
+ * The address a submitter typed, as the entry holds it: no trailing slash, and `https://` in front of a
+ * bare host name. A submitter typed `giantpirateradio.com` and was told it was not a web address; the
+ * directory takes https only, so there is nothing to ask them that the parser cannot assume. Any other
+ * scheme is left as typed, for stationAddressProblem to answer.
+ *
+ * @param {string | undefined} value
+ * @returns {string | undefined}
+ */
+function stationAddress(value) {
+    if (value === undefined) return undefined;
+    const address = value.trim().replace(/\/+$/, '');
+    return /^[a-z][a-z0-9+.-]*:\/\//i.test(address) ? address : `https://${address}`;
+}
+
+/**
  * The entry a submission describes, or the reasons there is not one.
  *
  * Only shapes the fields; whether the entry is ACCEPTABLE is `checkEntries`'s question, asked of the
@@ -173,7 +188,7 @@ export function toEntry(kind, form, context) {
 
     if (kind === 'stations') {
         const name = need('name');
-        data = { name, url: need('url')?.replace(/\/+$/, ''), description: need('description') };
+        data = { name, url: stationAddress(need('url')), description: need('description') };
         // Said here, in the form's words, so the submitter never sees the schema's pattern instead.
         const problem = data.url === undefined ? undefined : stationAddressProblem(data.url);
         if (problem !== undefined) problems.push(`"${labels.url}": ${problem}.`);
